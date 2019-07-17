@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-//	"go-simplejson"
 	"github.com/gomodule/redigo/redis"
+	"go-simplejson"
 )
 
 var pool = &redis.Pool{
@@ -67,3 +67,21 @@ func CheckRedis(key string)(exists bool){
 	}
 	return exists
 }
+
+func FindMaxExp(name string,exp int)(isTop bool){
+	names := []string{"何朝阳", "周宏亮" ,"陈晨"}
+	for _,j := range names{
+		if j == name{
+			continue
+		}
+		userDat := GetRedis(name)
+		js, err := simplejson.NewJson([]byte(userDat))
+		panicErr(err)
+		pkExp := js.Get("exp").MustInt()
+		if pkExp > exp {
+			return false
+		}
+	}
+	return true
+}
+

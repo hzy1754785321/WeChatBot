@@ -37,6 +37,7 @@ type userCache struct {
 	signCount int
 	Friendliness int
 	FriendlinessAdd int
+	exp int
 	}
 
 var datJSON string = `{

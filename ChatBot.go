@@ -6,12 +6,14 @@ import (
 	"go-simplejson"
 	"io/ioutil"
 	e "itchat4go/enum"
-	// m "itchat4go/model"
+	m "itchat4go/model"
 	s "itchat4go/service"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
+
 	// "regexp"
 	"strings"
 	"time"
@@ -88,19 +90,19 @@ func GetChat() {
 		}
 	}
 
-	// for _,v := range contactMap{
-	// 	fmt.Print(v.NickName)
-	// 	fmt.Print("======>")
-	// 	fmt.Print(v.UserName)
-	// 	fmt.Print("======>")
-	// 	fmt.Println(v.RemarkName)
-	// 	time.Sleep(time.Second)
-
+	// for _, v := range contactMap {
+	// 	if v.RemarkName == "陈晨" || v.RemarkName == "周宏亮" || v.RemarkName == "张潮洋" {
+	// 		fmt.Print(v.NickName)
+	// 		fmt.Print("======>")
+	// 		fmt.Print(v.UserName)
+	// 		fmt.Print("======>")
+	// 		fmt.Println(v.RemarkName)
+	// 	}
 	// }
 	fmt.Println("开始监听消息响应...")
 	var retcode, selector int64
 
-	// regGroup := regexp.MustCompile(`^@@`)
+	regGroup := regexp.MustCompile(`^@@`)
 	for {
 		retcode, selector, err = s.SyncCheck(&loginMap)
 		if err != nil {
@@ -111,192 +113,308 @@ func GetChat() {
 			}
 			continue
 		}
-		
+
 		if retcode == 0 && selector != 0 {
 			fmt.Printf("selector=%d,有新消息产生,准备拉取...\n", selector)
 			wxRecvMsges, err := s.WebWxSync(&loginMap)
 			panicErr(err)
-			fmt.Println(wxRecvMsges.MsgCount);
-			// for i := 0; i < wxRecvMsges.MsgCount; i++ {
-			// 	if wxRecvMsges.MsgList[i].MsgType == 1 {
-			// 		//	imageFile, err := os.Open("D:/Go/work/WeChatBot/test.jpg")
+			for i := 0; i < wxRecvMsges.MsgCount; i++ {
+				if wxRecvMsges.MsgList[i].MsgType == 1 {
+					//	imageFile, err := os.Open("D:/Go/work/WeChatBot/test.jpg")
 
-			// 		// imageStream, err := ioutil.ReadFile("D:/Go/Work/WeChatBot/test.jpg")
-			// 		// size := getFileSize("D:/Go/Work/WeChatBot/test.jpg")
-			// 		// panicErr(err)
-			// 		// retImg, err := s.UploadImg(&loginMap, imageStream,size)
-			// 		// panicErr(err)
-			// 		// println(retImg.MediaId)
-			// 		regAt := "@"
-			// 		/* 普通文本消息 */
-			// 		fmt.Println(wxRecvMsges.MsgList[i].FromUserName+":", wxRecvMsges.MsgList[i].Content)
-			// 		regAt += loginMap.SelfNickName
-			// 		tmp := strings.Split(wxRecvMsges.MsgList[i].Content, regAt)
-			// 		var reply string
-			// 		if strings.Contains(wxRecvMsges.MsgList[i].Content, regAt) && strings.Contains(tmp[1], "签到") {
-			// 			tmpId := tmp[0]
-			// 			userId := strings.Replace(tmpId, ":", "", -1)
-			// 			userId = strings.Replace(userId, "<br/>", "", -1)
-			// 			var user m.User
-			// 			var userTmp userCache
-			// 			var pass bool
-			// 			for _, v := range contactMap {
-			// 				if v.UserName == userId {
-			// 					user = v
-			// 					break
-			// 				}
-			// 			}
-			// 			if user.RemarkName != "" {
-			// 				if !CheckRedis(user.RemarkName) {
-			// 					dat := []byte(datJSON)
-			// 					jsDat, err := simplejson.NewJson(dat)
-			// 					panicErr(err)
-			// 					jsDat.Set("userName", user.NickName)
-			// 					jsDat.Set("city", user.City)
-			// 					todayTime := time.Now().Format("2006-01-02 15:04:05")
-			// 					jsDat.Set("signTime", todayTime)
-			// 					jsDat.Set("signCount", 1)
-			// 					friendliNessAdd := rand.Intn(30)
-			// 					friendliNess := friendliNessAdd
-			// 					jsDat.Set("Friendliness", friendliNess)
-			// 					userTmp.userName = user.NickName
-			// 					userTmp.city = user.City
-			// 					userTmp.signTime = todayTime
-			// 					userTmp.signCount = 1
-			// 					userTmp.Friendliness = friendliNess
-			// 					userTmp.FriendlinessAdd = friendliNessAdd
-			// 					unjs, err := jsDat.MarshalJSON()
-			// 					panicErr(err)
-			// 					SetRedis(user.RemarkName, string(unjs))
-			// 					pass = true
-			// 				} else {
-			// 					userDat := GetRedis(user.RemarkName)
-			// 					js, err := simplejson.NewJson([]byte(userDat))
-			// 					panicErr(err)
-			// 					signTimeTmp := js.Get("signTime").MustString()
-			// 					signTime, _ := time.ParseInLocation("2006-01-02 15:04:05", signTimeTmp, time.Local)
-			// 					if signTime.Day() != time.Now().Day() {
-			// 						pass = true
-			// 					} else if signTime.Month() != time.Now().Month() {
-			// 						pass = true
-			// 					}
-			// 					if pass {
-			// 						signCount := js.Get("signCount").MustInt()
-			// 						friendliNess := js.Get("Friendliness").MustInt()
-			// 						friendliNessAdd := rand.Intn(30)
-			// 						friendliNess += friendliNessAdd
-			// 						js.Set("Friendliness", friendliNess)
-			// 						js.Set("userName", user.NickName)
-			// 						js.Set("city", user.City)
-			// 						todayTime := time.Now().Format("2006-01-02 15:04:05")
-			// 						js.Set("signTime", todayTime)
-			// 						signCount = signCount + 1
-			// 						js.Set("signCount", signCount)
-			// 						userTmp.userName = user.NickName
-			// 						userTmp.city = user.City
-			// 						userTmp.signTime = todayTime
-			// 						userTmp.signCount = signCount
-			// 						userTmp.Friendliness = friendliNess
-			// 						userTmp.FriendlinessAdd = friendliNessAdd
-			// 						unjs, err := js.MarshalJSON()
-			// 						panicErr(err)
-			// 						SetRedis(user.RemarkName, string(unjs))
-			// 					}
-			// 				}
-			// 				var contents string
-			// 				content1 := fmt.Sprintf("@%s 签到成功！今天已经是你的第%d次签到啦～魔理沙酱对乃的好感度[+%d]2019年，要加油哦~", userTmp.userName, userTmp.signCount, userTmp.FriendlinessAdd)
-			// 				content2 := fmt.Sprintf("@%s 真是健忘呐！！今天签到过了哟！", user.NickName)
-			// 				if pass {
-			// 					contents = content1
-			// 				} else {
-			// 					contents = content2
-			// 				}
-			// 				wxSendMsg := m.WxSendMsg{}
-			// 				wxSendMsg.Type = 1
-			// 				wxSendMsg.Content = contents
-			// 				wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
-			// 				wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
-			// 				wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
-			// 				wxSendMsg.ClientMsgId = wxSendMsg.LocalID
+					// imageStream, err := ioutil.ReadFile("D:/Go/Work/WeChatBot/test.jpg")
+					// size := getFileSize("D:/Go/Work/WeChatBot/test.jpg")
+					// panicErr(err)
+					// retImg, err := s.UploadImg(&loginMap, imageStream,size)
+					// panicErr(err)
+					// println(retImg.MediaId)
+					regAt := "@"
+					/* 普通文本消息 */
+					fmt.Println(wxRecvMsges.MsgList[i].FromUserName+":", wxRecvMsges.MsgList[i].Content)
+					regAt += loginMap.SelfNickName
+					tmp := strings.Split(wxRecvMsges.MsgList[i].Content, regAt)
+					var reply string
+					var cont string
+					if len(tmp) > 1 {
+						cont = tmp[1]
+					} else {
+						cont = tmp[0]
+					}
+					if strings.Contains(wxRecvMsges.MsgList[i].Content, regAt) && strings.Contains(cont, "签到") {
+						tmpId := tmp[0]
+						userId := strings.Replace(tmpId, ":", "", -1)
+						userId = strings.Replace(userId, "<br/>", "", -1)
+						var user m.User
+						var userTmp userCache
+						var pass bool
+						for _, v := range contactMap {
+							if v.UserName == userId {
+								user = v
+								break
+							}
+						}
+						if user.RemarkName != "" {
+							if !CheckRedis(user.RemarkName) {
+								dat := []byte(datJSON)
+								jsDat, err := simplejson.NewJson(dat)
+								panicErr(err)
+								jsDat.Set("userName", user.NickName)
+								jsDat.Set("city", user.City)
+								todayTime := time.Now().Format("2006-01-02 15:04:05")
+								jsDat.Set("signTime", todayTime)
+								jsDat.Set("signCount", 1)
+								friendliNessAdd := rand.Intn(30)
+								friendliNess := friendliNessAdd
+								jsDat.Set("Friendliness", friendliNess)
+								userTmp.userName = user.NickName
+								userTmp.city = user.City
+								userTmp.signTime = todayTime
+								userTmp.signCount = 1
+								userTmp.Friendliness = friendliNess
+								userTmp.FriendlinessAdd = friendliNessAdd
+								unjs, err := jsDat.MarshalJSON()
+								panicErr(err)
+								SetRedis(user.RemarkName, string(unjs))
+								pass = true
+							} else {
+								userDat := GetRedis(user.RemarkName)
+								js, err := simplejson.NewJson([]byte(userDat))
+								panicErr(err)
+								signTimeTmp := js.Get("signTime").MustString()
+								signTime, _ := time.ParseInLocation("2006-01-02 15:04:05", signTimeTmp, time.Local)
+								if signTime.Day() != time.Now().Day() {
+									pass = true
+								} else if signTime.Month() != time.Now().Month() {
+									pass = true
+								}
+								if pass {
+									signCount := js.Get("signCount").MustInt()
+									friendliNess := js.Get("Friendliness").MustInt()
+									friendliNessAdd := rand.Intn(30)
+									friendliNess += friendliNessAdd
+									js.Set("Friendliness", friendliNess)
+									js.Set("userName", user.NickName)
+									js.Set("city", user.City)
+									todayTime := time.Now().Format("2006-01-02 15:04:05")
+									js.Set("signTime", todayTime)
+									signCount = signCount + 1
+									js.Set("signCount", signCount)
+									userTmp.userName = user.NickName
+									userTmp.city = user.City
+									userTmp.signTime = todayTime
+									userTmp.signCount = signCount
+									userTmp.Friendliness = friendliNess
+									userTmp.FriendlinessAdd = friendliNessAdd
+									unjs, err := js.MarshalJSON()
+									panicErr(err)
+									SetRedis(user.RemarkName, string(unjs))
+								}
+							}
+							var contents string
+							content1 := fmt.Sprintf("@%s 签到成功！今天已经是你的第%d次签到啦～魔理沙酱对乃的好感度[+%d]2019年，要加油哦~", userTmp.userName, userTmp.signCount, userTmp.FriendlinessAdd)
+							content2 := fmt.Sprintf("@%s 真是健忘呐！！今天签到过了哟！", user.NickName)
+							if pass {
+								contents = content1
+							} else {
+								contents = content2
+							}
+							wxSendMsg := m.WxSendMsg{}
+							wxSendMsg.Type = 1
+							wxSendMsg.Content = contents
+							wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
+							wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
+							wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
+							wxSendMsg.ClientMsgId = wxSendMsg.LocalID
 
-			// 				/* 加点延时，避免消息次序混乱，同时避免微信侦察到机器人 */
-			// 				time.Sleep(time.Second)
+							/* 加点延时，避免消息次序混乱，同时避免微信侦察到机器人 */
+							time.Sleep(time.Second)
 
-			// 				go s.SendMsg(&loginMap, wxSendMsg)
+							go s.SendMsg(&loginMap, wxSendMsg)
 
-			// 				if pass && userTmp.city != "" {
-			// 					msg := GetWeather(userTmp.city)
-			// 					content := fmt.Sprintf("下面是魔理沙酱精心为你收集的天气情况哦，满怀感激的收下吧~\n%s", msg)
-			// 					wxSendMsg := m.WxSendMsg{}
-			// 					wxSendMsg.Type = 1
-			// 					wxSendMsg.Content = content
-			// 					wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
-			// 					wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
-			// 					wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
-			// 					wxSendMsg.ClientMsgId = wxSendMsg.LocalID
+							if pass && userTmp.city != "" {
+								msg := GetWeather(userTmp.city)
+								content := fmt.Sprintf("下面是魔理沙酱精心为你收集的天气情况哦，满怀感激的收下吧~\n%s", msg)
+								wxSendMsg := m.WxSendMsg{}
+								wxSendMsg.Type = 1
+								wxSendMsg.Content = content
+								wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
+								wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
+								wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
+								wxSendMsg.ClientMsgId = wxSendMsg.LocalID
 
-			// 					time.Sleep(time.Second)
-			// 					go s.SendMsg(&loginMap, wxSendMsg)
-			// 				}
-			// 			}
-			// 		} else if strings.Contains(wxRecvMsges.MsgList[i].Content, regAt) && strings.Contains(tmp[1], "好感度") {
-			// 			tmpId := tmp[0]
-			// 			userId := strings.Replace(tmpId, ":", "", -1)
-			// 			userId = strings.Replace(userId, "<br/>", "", -1)
-			// 			var content1 string
-			// 			var content2 string
-			// 			var user m.User
-			// 			var pass bool
-			// 			for _, v := range contactMap {
-			// 				if v.UserName == userId {
-			// 					user = v
-			// 					break
-			// 				}
-			// 			}
-			// 			if !CheckRedis(user.RemarkName) {
-			// 				content1 = fmt.Sprintf("@%s 不好意思哟,未找到你的信息,请先签到呢", user.NickName)
-			// 			} else {
-			// 				userDat := GetRedis(user.RemarkName)
-			// 				js, err := simplejson.NewJson([]byte(userDat))
-			// 				panicErr(err)
-			// 				friendliNess := js.Get("Friendliness").MustInt()
-			// 				content2 = fmt.Sprintf("@%s 魔理沙酱对你的好感度已经有 %d 呦,请继续加油哒", user.NickName, friendliNess)
-			// 				pass = true
-			// 			}
-			// 			var content string
-			// 			if pass {
-			// 				content = content2
-			// 			} else {
-			// 				content = content1
-			// 			}
-			// 			wxSendMsg := m.WxSendMsg{}
-			// 			wxSendMsg.Type = 1
-			// 			wxSendMsg.Content = content
-			// 			wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
-			// 			wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
-			// 			wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
-			// 			wxSendMsg.ClientMsgId = wxSendMsg.LocalID
-			// 			time.Sleep(time.Second)
-			// 			go s.SendMsg(&loginMap, wxSendMsg)
-			// 		} else if regGroup.MatchString(wxRecvMsges.MsgList[i].FromUserName) && strings.Contains(wxRecvMsges.MsgList[i].Content, regAt) {
-			// 			if len(tmp) > 1 {
-			// 				reply = GetReply(tmp[1])
-			// 			}
-			// 			wxSendMsg := m.WxSendMsg{}
-			// 			wxSendMsg.Type = 1
-			// 			wxSendMsg.Content = reply
-			// 			wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
-			// 			wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
-			// 			wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
-			// 			wxSendMsg.ClientMsgId = wxSendMsg.LocalID
+								time.Sleep(time.Second)
+								go s.SendMsg(&loginMap, wxSendMsg)
+							}
+						}
+					} else if strings.Contains(wxRecvMsges.MsgList[i].Content, regAt) && strings.Contains(cont, "好感度") {
+						tmpId := tmp[0]
+						userId := strings.Replace(tmpId, ":", "", -1)
+						userId = strings.Replace(userId, "<br/>", "", -1)
+						var content1 string
+						var content2 string
+						var user m.User
+						var pass bool
+						for _, v := range contactMap {
+							if v.UserName == userId {
+								user = v
+								break
+							}
+						}
+						if !CheckRedis(user.RemarkName) {
+							content1 = fmt.Sprintf("@%s 不好意思哟,未找到你的信息,请先签到呢", user.NickName)
+						} else {
+							userDat := GetRedis(user.RemarkName)
+							js, err := simplejson.NewJson([]byte(userDat))
+							panicErr(err)
+							friendliNess := js.Get("Friendliness").MustInt()
+							content2 = fmt.Sprintf("@%s 魔理沙酱对你的好感度已经有 %d 呦,请继续加油哒", user.NickName, friendliNess)
+							pass = true
+						}
+						var content string
+						if pass {
+							content = content2
+						} else {
+							content = content1
+						}
+						wxSendMsg := m.WxSendMsg{}
+						wxSendMsg.Type = 1
+						wxSendMsg.Content = content
+						wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
+						wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
+						wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
+						wxSendMsg.ClientMsgId = wxSendMsg.LocalID
+						time.Sleep(time.Second)
+						go s.SendMsg(&loginMap, wxSendMsg)
+					}  else if strings.Contains(wxRecvMsges.MsgList[i].Content, regAt) && strings.Contains(cont, "经验值") ||
+						strings.Contains(wxRecvMsges.MsgList[i].ToUserName, "@@") && strings.Contains(cont, "我的经验值") {
+						tmpId := tmp[0]
+						userId := strings.Replace(tmpId, ":", "", -1)
+						userId = strings.Replace(userId, "<br/>", "", -1)
+						var content1 string
+						var content2 string
+						var user m.User
+						var pass bool
+						if len(tmp) > 1 {
+						for _, v := range contactMap {
+							if v.UserName == userId {
+								user = v
+								break
+							}
+						}
+					}else{
+						user.RemarkName = "何朝阳"
+					}
+						if !CheckRedis(user.RemarkName) {
+							content1 = fmt.Sprintf("@%s 不好意思哟,未找到你的信息,请先签到呢", user.NickName)
+						} else {
+							userDat := GetRedis(user.RemarkName)
+							js, err := simplejson.NewJson([]byte(userDat))
+							panicErr(err)
+							exp := js.Get("exp").MustInt()
+							if user.RemarkName == "何朝阳" {
+								content2 = fmt.Sprintf("@%s 你的经验值已经有 %d点了呢", "嗨，阳光", exp)
+							} else {
+								content2 = fmt.Sprintf("@%s 你的经验值已经有 %d点了呢", user.NickName, exp)
+							}
+							topContent := []string{"哇!你是本群最能水的呢", "你好强哦", "无敌总是寂寞的,看来你已经很寂寞了呢", "恭喜，你以后就是老大了"}
+							isTop := FindMaxExp(user.RemarkName, exp)
+							if isTop {
+								randIndex := rand.Intn(3)
+								content2 = fmt.Sprintf("%s,%s", content2, topContent[randIndex])
+							}
+							pass = true
+						}
+						var content string
+						if pass {
+							content = content2
+						} else {
+							content = content1
+						}
+						wxSendMsg := m.WxSendMsg{}
+						wxSendMsg.Type = 1
+						wxSendMsg.Content = content
+						if user.RemarkName == "何朝阳" {
+							wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].FromUserName
+							wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].ToUserName
+						} else {
+							wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
+							wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
+						}
+						wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
+						wxSendMsg.ClientMsgId = wxSendMsg.LocalID
+						time.Sleep(time.Second)
+						go s.SendMsg(&loginMap, wxSendMsg)
+					}else if regGroup.MatchString(wxRecvMsges.MsgList[i].FromUserName) && strings.Contains(wxRecvMsges.MsgList[i].Content, regAt) {
+						if len(tmp) > 1 {
+							reply = GetReply(tmp[1])
+						}
+						wxSendMsg := m.WxSendMsg{}
+						wxSendMsg.Type = 1
+						wxSendMsg.Content = reply
+						wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
+						wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
+						wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
+						wxSendMsg.ClientMsgId = wxSendMsg.LocalID
 
-			// 			/* 加点延时，避免消息次序混乱，同时避免微信侦察到机器人 */
-			// 			time.Sleep(time.Second)
+						/* 加点延时，避免消息次序混乱，同时避免微信侦察到机器人 */
+						time.Sleep(time.Second)
 
-			// 			go s.SendMsg(&loginMap, wxSendMsg)
-			// 		}
-			// 	}
-			// }
+						go s.SendMsg(&loginMap, wxSendMsg)
+					}
+				}
+				if wxRecvMsges.MsgList[i].MsgType == 1 || wxRecvMsges.MsgList[i].MsgType == 3 || wxRecvMsges.MsgList[i].MsgType == 47 {
+					regGroup := "@@"
+					if strings.Contains(wxRecvMsges.MsgList[i].ToUserName, regGroup) {
+						var user m.User
+						regAt := "@"
+						tmp := strings.Split(wxRecvMsges.MsgList[i].Content, regAt)
+						tmpId := tmp[0]
+						userId := strings.Replace(tmpId, ":", "", -1)
+						userId = strings.Replace(userId, "<br/>", "", -1)
+						if len(tmp) > 1 {
+							for _, v := range contactMap {
+								if v.UserName == userId {
+									user = v
+									break
+								}
+							}
+						} else {
+							user.RemarkName = "何朝阳"
+							if tmpId == "我要签到" {
+								Sign(user, wxRecvMsges.MsgList[i].ToUserName, wxRecvMsges.MsgList[i].FromUserName)
+							}
+						}
+						if !CheckRedis(user.RemarkName) {
+							content1 := fmt.Sprintf("@%s 不好意思哟,未找到你的信息,请先签到呢", user.NickName)
+							wxSendMsg := m.WxSendMsg{}
+							wxSendMsg.Type = 1
+							wxSendMsg.Content = content1
+							wxSendMsg.FromUserName = wxRecvMsges.MsgList[i].ToUserName
+							wxSendMsg.ToUserName = wxRecvMsges.MsgList[i].FromUserName
+							wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
+							wxSendMsg.ClientMsgId = wxSendMsg.LocalID
+							time.Sleep(time.Second)
+							go s.SendMsg(&loginMap, wxSendMsg)
+						} else {
+							userDat := GetRedis(user.RemarkName)
+							js, err := simplejson.NewJson([]byte(userDat))
+							panicErr(err)
+							var userTmp userCache
+							userTmp.Friendliness = js.Get("Friendliness").MustInt()
+							userTmp.city = user.City
+							userTmp.signCount = js.Get("signCount").MustInt()
+							userTmp.signTime = js.Get("signTime").MustString()
+							userTmp.userName = user.NickName
+							userTmp.exp = js.Get("exp").MustInt() + 1
+							js.Set("exp", userTmp.exp)
+							unjs, err := js.MarshalJSON()
+							panicErr(err)
+							SetRedis(user.RemarkName, string(unjs))
+							//			content2 = fmt.Sprintf("@%s 魔理沙酱对你的好感度已经有 %d 呦,请继续加油哒", user.NickName, friendliNess)
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -413,4 +531,87 @@ func main() {
 	//	LinkRedis()
 	//  var reply = GetReply("")
 	//   println(reply)
+}
+
+func Sign(user m.User, toUserName string, fromUserName string) {
+	if user.RemarkName != "" {
+		pass := false
+		var userTmp userCache
+		if !CheckRedis(user.RemarkName) {
+			dat := []byte(datJSON)
+			jsDat, err := simplejson.NewJson(dat)
+			panicErr(err)
+			jsDat.Set("userName", user.NickName)
+			jsDat.Set("city", "上海")
+			todayTime := time.Now().Format("2006-01-02 15:04:05")
+			jsDat.Set("signTime", todayTime)
+			jsDat.Set("signCount", 1)
+			friendliNessAdd := rand.Intn(30)
+			friendliNess := friendliNessAdd
+			jsDat.Set("Friendliness", friendliNess)
+			userTmp.userName = user.NickName
+			userTmp.city = user.City
+			userTmp.signTime = todayTime
+			userTmp.signCount = 1
+			userTmp.Friendliness = friendliNess
+			userTmp.FriendlinessAdd = friendliNessAdd
+			unjs, err := jsDat.MarshalJSON()
+			panicErr(err)
+			SetRedis(user.RemarkName, string(unjs))
+			pass = true
+		} else {
+			userDat := GetRedis(user.RemarkName)
+			js, err := simplejson.NewJson([]byte(userDat))
+			panicErr(err)
+			signTimeTmp := js.Get("signTime").MustString()
+			signTime, _ := time.ParseInLocation("2006-01-02 15:04:05", signTimeTmp, time.Local)
+			if signTime.Day() != time.Now().Day() {
+				pass = true
+			} else if signTime.Month() != time.Now().Month() {
+				pass = true
+			}
+			if pass {
+				signCount := js.Get("signCount").MustInt()
+				friendliNess := js.Get("Friendliness").MustInt()
+				friendliNessAdd := rand.Intn(30)
+				friendliNess += friendliNessAdd
+				js.Set("Friendliness", friendliNess)
+				js.Set("userName", user.NickName)
+				js.Set("city", user.City)
+				todayTime := time.Now().Format("2006-01-02 15:04:05")
+				js.Set("signTime", todayTime)
+				signCount = signCount + 1
+				js.Set("signCount", signCount)
+				userTmp.userName = user.NickName
+				userTmp.city = "上海"
+				userTmp.signTime = todayTime
+				userTmp.signCount = signCount
+				userTmp.Friendliness = friendliNess
+				userTmp.FriendlinessAdd = friendliNessAdd
+				unjs, err := js.MarshalJSON()
+				panicErr(err)
+				SetRedis(user.RemarkName, string(unjs))
+			}
+		}
+		var contents string
+		content1 := fmt.Sprintf("@%s 签到成功！今天已经是你的第%d次签到啦～魔理沙酱对乃的好感度[+%d]2019年，要加油哦~", "嗨，阳光", userTmp.signCount, userTmp.FriendlinessAdd)
+		content2 := fmt.Sprintf("@%s 真是健忘呐！！今天签到过了哟！", "嗨，阳光")
+		if pass {
+			contents = content1
+		} else {
+			contents = content2
+		}
+		wxSendMsg := m.WxSendMsg{}
+		wxSendMsg.Type = 1
+		wxSendMsg.Content = contents
+		wxSendMsg.FromUserName = fromUserName
+		wxSendMsg.ToUserName = toUserName
+		wxSendMsg.LocalID = fmt.Sprintf("%d", time.Now().Unix())
+		wxSendMsg.ClientMsgId = wxSendMsg.LocalID
+
+		/* 加点延时，避免消息次序混乱，同时避免微信侦察到机器人 */
+		time.Sleep(time.Second)
+
+		go s.SendMsg(&loginMap, wxSendMsg)
+	}
 }

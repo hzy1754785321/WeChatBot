@@ -90,15 +90,6 @@ func GetChat() {
 		}
 	}
 
-	// for _, v := range contactMap {
-	// 	if v.RemarkName == "陈晨" || v.RemarkName == "周宏亮" || v.RemarkName == "张潮洋" {
-	// 		fmt.Print(v.NickName)
-	// 		fmt.Print("======>")
-	// 		fmt.Print(v.UserName)
-	// 		fmt.Print("======>")
-	// 		fmt.Println(v.RemarkName)
-	// 	}
-	// }
 	fmt.Println("开始监听消息响应...")
 	var retcode, selector int64
 
